@@ -40,8 +40,7 @@
     padding-right: env(safe-area-inset-right);
   }
   .container {
-    width: 100%; max-width: 620px; margin: 0 auto; padding: 16px 20px;
-    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    width: 100%; max-width: 620px; margin: 0 auto; padding: 8px 16px;
   }
 
   .header { text-align: center; padding: 24px 0 16px; }
@@ -54,6 +53,10 @@
 
   .screen { display: none; flex-direction: column; }
   .screen.active { display: flex; animation: fadeIn 0.3s ease; }
+  #screen-game.active {
+    height: 100dvh; max-height: 100dvh; overflow: hidden;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
   /* Categories */
@@ -73,7 +76,7 @@
   .category-btn .emoji { display: block; font-size: 2rem; margin-bottom: 8px; }
 
   /* Progress */
-  .progress-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; }
+  .progress-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; flex-shrink: 0; }
   .progress-dots { display: flex; gap: 6px; }
   .progress-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); transition: all 0.3s; }
   .progress-dot.done { background: var(--success); }
@@ -82,22 +85,22 @@
 
   /* Current Item */
   .current-item {
-    display: flex; gap: 16px; align-items: center;
-    padding: 20px; background: var(--surface); border: 2px solid var(--primary);
-    border-radius: 18px; margin-bottom: 16px; position: relative; overflow: hidden;
+    display: flex; gap: 12px; align-items: center;
+    padding: 14px; background: var(--surface); border: 2px solid var(--primary);
+    border-radius: 14px; margin-bottom: 8px; position: relative; overflow: hidden; flex-shrink: 0;
   }
   .current-item::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
     background: linear-gradient(90deg, var(--primary), var(--accent));
   }
   .current-item .item-img-wrap {
-    width: 100px; flex-shrink: 0; border-radius: 10px; overflow: hidden;
+    width: 72px; height: 72px; flex-shrink: 0; border-radius: 10px; overflow: hidden;
     background: var(--surface2); display: flex; align-items: center; justify-content: center;
   }
   .current-item .item-img-wrap img {
-    width: 100%; height: auto; display: block; border-radius: 10px;
+    width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 10px;
   }
-  .current-item .item-img-wrap .emoji-fallback { font-size: 2.8rem; }
+  .current-item .item-img-wrap .emoji-fallback { font-size: 2.2rem; }
   .current-item .item-img-wrap .img-loading {
     width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--primary);
     border-radius: 50%; animation: spin 0.8s linear infinite;
@@ -108,63 +111,67 @@
     font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px;
     color: var(--text-dim); margin-bottom: 4px;
   }
-  .current-item .name { font-size: 1.35rem; font-weight: 800; line-height: 1.2; }
-  .current-item .desc { margin-top: 6px; font-size: 0.82rem; color: var(--text-dim); line-height: 1.4; }
+  .current-item .name { font-size: 1.15rem; font-weight: 800; line-height: 1.2; }
+  .current-item .desc { margin-top: 4px; font-size: 0.75rem; color: var(--text-dim); line-height: 1.3;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
 
   .slots-label {
-    color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase;
-    letter-spacing: 1.5px; margin-bottom: 8px; text-align: center;
+    color: var(--text-dim); font-size: 0.7rem; text-transform: uppercase;
+    letter-spacing: 1.5px; margin-bottom: 4px; text-align: center; flex-shrink: 0;
   }
 
   /* Slots */
-  .slots { display: flex; flex-direction: column; gap: 6px; padding-bottom: 24px; }
+  .slots { display: flex; flex-direction: column; gap: 4px; flex: 1; min-height: 0; }
   .slot {
-    display: flex; align-items: center; gap: 10px; padding: 8px 12px;
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-    cursor: pointer; transition: all 0.2s; min-height: 48px;
+    display: flex; align-items: center; gap: 8px; padding: 4px 10px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    cursor: pointer; transition: all 0.2s; flex: 1; min-height: 0;
   }
-  .slot:hover:not(.taken), .slot:active:not(.taken) { background: var(--slot-hover); border-color: var(--primary); transform: scale(1.01); }
+  .slot:hover:not(.taken), .slot:active:not(.taken) { background: var(--slot-hover); border-color: var(--primary); }
   .slot:active:not(.taken) { transform: scale(0.98); }
   .slot.taken { cursor: default; background: var(--surface2); border-color: transparent; }
   .slot.just-placed { animation: slotPop 0.4s ease; border-color: var(--accent); background: rgba(240,165,0,0.08); }
   @keyframes slotPop { 0% { transform: scale(1); } 30% { transform: scale(1.03); } 100% { transform: scale(1); } }
 
   .slot .rank {
-    width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 0.85rem; flex-shrink: 0;
+    width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 0.8rem; flex-shrink: 0;
   }
   .slot:not(.taken) .rank { background: var(--slot-free); color: var(--text-dim); }
   .slot.taken .rank { background: var(--accent); color: var(--bg); }
 
   .slot .slot-thumb {
-    width: 32px; flex-shrink: 0; border-radius: 6px; overflow: hidden;
+    width: 28px; height: 28px; flex-shrink: 0; border-radius: 6px; overflow: hidden;
     background: var(--border); display: flex; align-items: center; justify-content: center;
   }
-  .slot .slot-thumb img { width: 100%; height: auto; display: block; border-radius: 6px; }
-  .slot .slot-thumb .emoji-sm { font-size: 1.1rem; }
+  .slot .slot-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 6px; }
+  .slot .slot-thumb .emoji-sm { font-size: 1rem; }
 
   .slot .slot-content { min-width: 0; flex: 1; }
   .slot .slot-name {
-    font-size: 0.85rem; font-weight: 500; color: var(--text-dim);
+    font-size: 0.8rem; font-weight: 500; color: var(--text-dim);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .slot.taken .slot-name { color: var(--text); font-weight: 600; }
-  .slot .slot-desc {
-    font-size: 0.7rem; color: var(--text-dim2);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;
-  }
+  .slot .slot-desc { display: none; }
   .slot:not(.taken) .slot-name { text-align: center; }
 
-  /* Result */
-  .result-header { text-align: center; padding: 20px 0 14px; }
-  .result-header h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; }
-  .result-header .cat-name { color: var(--accent); font-size: 0.95rem; font-weight: 600; }
+  /* Result — fits on one screen */
+  #screen-result.active {
+    display: flex; flex-direction: column;
+    height: 100dvh; max-height: 100dvh; overflow: hidden;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .result-header { text-align: center; padding: 12px 0 8px; flex-shrink: 0; }
+  .result-header h2 { font-size: 1.3rem; font-weight: 800; margin-bottom: 2px; }
+  .result-header .cat-name { color: var(--accent); font-size: 0.85rem; font-weight: 600; }
 
-  .result-list { display: flex; flex-direction: column; gap: 8px; }
+  .result-list { display: flex; flex-direction: column; gap: 4px; flex: 1; min-height: 0; }
   .result-item {
-    display: flex; align-items: center; gap: 12px; padding: 10px 14px;
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-    animation: slideIn 0.4s ease both;
+    display: flex; align-items: center; gap: 10px; padding: 4px 10px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    animation: slideIn 0.4s ease both; flex: 1; min-height: 0;
   }
   .result-item:nth-child(1) { border-color: #ffd700; background: rgba(255,215,0,0.06); }
   .result-item:nth-child(2) { border-color: #c0c0c0; background: rgba(192,192,192,0.04); }
@@ -172,30 +179,29 @@
   @keyframes slideIn { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: translateX(0); } }
 
   .result-item .rank {
-    width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 0.95rem; background: var(--accent); color: var(--bg); flex-shrink: 0;
+    width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 0.85rem; background: var(--accent); color: var(--bg); flex-shrink: 0;
   }
-  .result-item:nth-child(1) .rank { background: #ffd700; font-size: 1.1rem; }
+  .result-item:nth-child(1) .rank { background: #ffd700; font-size: 1rem; }
   .result-item:nth-child(2) .rank { background: #c0c0c0; }
   .result-item:nth-child(3) .rank { background: #cd7f32; }
 
   .result-item .result-thumb {
-    width: 48px; flex-shrink: 0; border-radius: 8px; overflow: hidden;
+    width: 32px; height: 32px; flex-shrink: 0; border-radius: 6px; overflow: hidden;
     background: var(--border); display: flex; align-items: center; justify-content: center;
   }
-  .result-item .result-thumb img { width: 100%; height: auto; display: block; border-radius: 8px; }
-  .result-item .result-thumb .emoji-md { font-size: 1.5rem; }
+  .result-item .result-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 6px; }
+  .result-item .result-thumb .emoji-md { font-size: 1.2rem; }
   .result-item .result-info { min-width: 0; flex: 1; }
-  .result-item .result-name { font-size: 0.95rem; font-weight: 600; }
-  .result-item .result-desc {
-    font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; line-height: 1.3;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-  }
+  .result-item .result-name { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .result-item .result-desc { display: none; }
 
-  .result-actions { display: flex; gap: 10px; margin-top: 16px; padding-bottom: 24px; }
+  .result-actions { display: flex; gap: 10px; padding: 10px 0; flex-shrink: 0;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  }
   .btn {
-    flex: 1; padding: 14px 20px; border-radius: 12px; border: none;
-    font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    flex: 1; padding: 12px 16px; border-radius: 12px; border: none;
+    font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
   }
   .btn-primary { background: var(--primary); color: white; }
   .btn-primary:hover, .btn-primary:active { background: var(--primary-hover); }
@@ -217,10 +223,13 @@
   .loading-overlay.hidden { display: none; }
 
   @media (max-width: 420px) {
-    .current-item .item-img-wrap { width: 70px; }
-    .current-item .name { font-size: 1.15rem; }
-    .slot { padding: 6px 10px; min-height: 42px; gap: 8px; }
-    .slot .slot-thumb { width: 28px; }
+    .current-item .item-img-wrap { width: 60px; height: 60px; }
+    .current-item .name { font-size: 1rem; }
+    .current-item { padding: 10px; gap: 10px; }
+    .slot .rank { width: 22px; height: 22px; font-size: 0.75rem; }
+    .slot .slot-thumb { width: 24px; height: 24px; }
+    .result-item .rank { width: 24px; height: 24px; font-size: 0.75rem; }
+    .result-item .result-thumb { width: 28px; height: 28px; }
   }
 </style>
 </head>
@@ -726,7 +735,7 @@ function renderGame() {
           <div class="slot-desc">${item[1].split('.')[0]}</div>
         </div>`;
     } else {
-      slot.innerHTML = `<div class="rank">${i + 1}</div><div class="slot-content"><div class="slot-name">—</div></div>`;
+      slot.innerHTML = `<div class="rank">${i + 1}</div><div class="slot-thumb"></div><div class="slot-content"><div class="slot-name">—</div></div>`;
       slot.addEventListener('click', () => placeItem(i));
     }
     slotsEl.appendChild(slot);
