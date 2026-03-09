@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Top 10 Ranking Game</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#6c5ce7">
+
+<!-- iOS PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Top 10">
+<link rel="apple-touch-icon" href="icon.svg">
+
+<!-- Prevent zoom on double-tap / input focus -->
+<meta name="format-detection" content="telephone=no">
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f0f1a; --surface: #1a1a2e; --surface2: #22223a; --border: #2a2a4a;
+    --text: #e8e8f0; --text-dim: #8888aa; --text-dim2: #666688;
+    --primary: #6c5ce7; --primary-hover: #7f6ff0;
+    --accent: #f0a500; --success: #00b894;
+    --slot-free: #2a2a4a; --slot-hover: #3a3a5a;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100dvh;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none; user-select: none;
+    overscroll-behavior: none;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  .container {
+    width: 100%; max-width: 620px; margin: 0 auto; padding: 16px 20px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+
+  .header { text-align: center; padding: 24px 0 16px; }
+  .header h1 {
+    font-size: 2rem; font-weight: 800;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .header p { color: var(--text-dim); margin-top: 8px; font-size: 0.92rem; line-height: 1.5; }
+
+  .screen { display: none; flex-direction: column; }
+  .screen.active { display: flex; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Categories */
+  .category-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 16px; }
+  .category-btn {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px 14px; cursor: pointer; transition: all 0.2s;
+    text-align: center; color: var(--text); font-size: 0.9rem; font-weight: 600;
+  }
+  .category-btn:hover, .category-btn:active {
+    background: var(--surface2); border-color: var(--primary);
+    transform: translateY(-2px); box-shadow: 0 4px 20px rgba(108, 92, 231, 0.15);
+  }
+  .category-btn:active {
+    transform: scale(0.97);
+  }
+  .category-btn .emoji { display: block; font-size: 2rem; margin-bottom: 8px; }
+
+  /* Progress */
+  .progress-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; }
+  .progress-dots { display: flex; gap: 6px; }
+  .progress-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); transition: all 0.3s; }
+  .progress-dot.done { background: var(--success); }
+  .progress-dot.current { background: var(--accent); transform: scale(1.3); }
+  .progress-label { color: var(--text-dim); font-size: 0.85rem; }
+
+  /* Current Item */
+  .current-item {
+    display: flex; gap: 16px; align-items: center;
+    padding: 20px; background: var(--surface); border: 2px solid var(--primary);
+    border-radius: 18px; margin-bottom: 16px; position: relative; overflow: hidden;
+  }
+  .current-item::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+  }
+  .current-item .item-img-wrap {
+    width: 100px; flex-shrink: 0; border-radius: 10px; overflow: hidden;
+    background: var(--surface2); display: flex; align-items: center; justify-content: center;
+  }
+  .current-item .item-img-wrap img {
+    width: 100%; height: auto; display: block; border-radius: 10px;
+  }
+  .current-item .item-img-wrap .emoji-fallback { font-size: 2.8rem; }
+  .current-item .item-img-wrap .img-loading {
+    width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--primary);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .current-item .item-info { flex: 1; min-width: 0; }
+  .current-item .label {
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px;
+    color: var(--text-dim); margin-bottom: 4px;
+  }
+  .current-item .name { font-size: 1.35rem; font-weight: 800; line-height: 1.2; }
+  .current-item .desc { margin-top: 6px; font-size: 0.82rem; color: var(--text-dim); line-height: 1.4; }
+
+  .slots-label {
+    color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase;
+    letter-spacing: 1.5px; margin-bottom: 8px; text-align: center;
+  }
+
+  /* Slots */
+  .slots { display: flex; flex-direction: column; gap: 6px; padding-bottom: 24px; }
+  .slot {
+    display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    cursor: pointer; transition: all 0.2s; min-height: 48px;
+  }
+  .slot:hover:not(.taken), .slot:active:not(.taken) { background: var(--slot-hover); border-color: var(--primary); transform: scale(1.01); }
+  .slot:active:not(.taken) { transform: scale(0.98); }
+  .slot.taken { cursor: default; background: var(--surface2); border-color: transparent; }
+  .slot.just-placed { animation: slotPop 0.4s ease; border-color: var(--accent); background: rgba(240,165,0,0.08); }
+  @keyframes slotPop { 0% { transform: scale(1); } 30% { transform: scale(1.03); } 100% { transform: scale(1); } }
+
+  .slot .rank {
+    width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 0.85rem; flex-shrink: 0;
+  }
+  .slot:not(.taken) .rank { background: var(--slot-free); color: var(--text-dim); }
+  .slot.taken .rank { background: var(--accent); color: var(--bg); }
+
+  .slot .slot-thumb {
+    width: 32px; flex-shrink: 0; border-radius: 6px; overflow: hidden;
+    background: var(--border); display: flex; align-items: center; justify-content: center;
+  }
+  .slot .slot-thumb img { width: 100%; height: auto; display: block; border-radius: 6px; }
+  .slot .slot-thumb .emoji-sm { font-size: 1.1rem; }
+
+  .slot .slot-content { min-width: 0; flex: 1; }
+  .slot .slot-name {
+    font-size: 0.85rem; font-weight: 500; color: var(--text-dim);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .slot.taken .slot-name { color: var(--text); font-weight: 600; }
+  .slot .slot-desc {
+    font-size: 0.7rem; color: var(--text-dim2);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;
+  }
+  .slot:not(.taken) .slot-name { text-align: center; }
+
+  /* Result */
+  .result-header { text-align: center; padding: 20px 0 14px; }
+  .result-header h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; }
+  .result-header .cat-name { color: var(--accent); font-size: 0.95rem; font-weight: 600; }
+
+  .result-list { display: flex; flex-direction: column; gap: 8px; }
+  .result-item {
+    display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    animation: slideIn 0.4s ease both;
+  }
+  .result-item:nth-child(1) { border-color: #ffd700; background: rgba(255,215,0,0.06); }
+  .result-item:nth-child(2) { border-color: #c0c0c0; background: rgba(192,192,192,0.04); }
+  .result-item:nth-child(3) { border-color: #cd7f32; background: rgba(205,127,50,0.04); }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: translateX(0); } }
+
+  .result-item .rank {
+    width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 0.95rem; background: var(--accent); color: var(--bg); flex-shrink: 0;
+  }
+  .result-item:nth-child(1) .rank { background: #ffd700; font-size: 1.1rem; }
+  .result-item:nth-child(2) .rank { background: #c0c0c0; }
+  .result-item:nth-child(3) .rank { background: #cd7f32; }
+
+  .result-item .result-thumb {
+    width: 48px; flex-shrink: 0; border-radius: 8px; overflow: hidden;
+    background: var(--border); display: flex; align-items: center; justify-content: center;
+  }
+  .result-item .result-thumb img { width: 100%; height: auto; display: block; border-radius: 8px; }
+  .result-item .result-thumb .emoji-md { font-size: 1.5rem; }
+  .result-item .result-info { min-width: 0; flex: 1; }
+  .result-item .result-name { font-size: 0.95rem; font-weight: 600; }
+  .result-item .result-desc {
+    font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; line-height: 1.3;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+
+  .result-actions { display: flex; gap: 10px; margin-top: 16px; padding-bottom: 24px; }
+  .btn {
+    flex: 1; padding: 14px 20px; border-radius: 12px; border: none;
+    font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover, .btn-primary:active { background: var(--primary-hover); }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover, .btn-secondary:active { background: var(--surface2); }
+  .btn-secondary:active { transform: scale(0.97); }
+
+  /* Loading overlay */
+  .loading-overlay {
+    position: fixed; inset: 0; background: var(--bg); z-index: 100;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+  }
+  .loading-overlay .spinner {
+    width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--primary);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  .loading-overlay p { color: var(--text-dim); font-size: 0.9rem; }
+  .loading-overlay.hidden { display: none; }
+
+  @media (max-width: 420px) {
+    .current-item .item-img-wrap { width: 70px; }
+    .current-item .name { font-size: 1.15rem; }
+    .slot { padding: 6px 10px; min-height: 42px; gap: 8px; }
+    .slot .slot-thumb { width: 28px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div id="screen-menu" class="screen active">
+    <div class="header">
+      <h1>Top 10</h1>
+      <p>Wähle eine Kategorie. Dir werden 10 Einträge nacheinander gezeigt — platziere jeden auf deiner persönlichen Rangliste!</p>
+    </div>
+    <div class="category-grid" id="category-grid"></div>
+  </div>
+
+  <div id="screen-game" class="screen">
+    <div class="progress-bar">
+      <div class="progress-dots" id="progress-dots"></div>
+      <span class="progress-label" id="progress-label"></span>
+    </div>
+    <div class="current-item">
+      <div class="item-img-wrap" id="current-img-wrap"></div>
+      <div class="item-info">
+        <div class="label">Wohin damit?</div>
+        <div class="name" id="current-name"></div>
+        <div class="desc" id="current-desc"></div>
+      </div>
+    </div>
+    <p class="slots-label">Wähle einen Platz</p>
+    <div class="slots" id="slots"></div>
+  </div>
+
+  <div id="screen-result" class="screen">
+    <div class="result-header">
+      <h2>Deine Top 10</h2>
+      <div class="cat-name" id="result-category"></div>
+    </div>
+    <div class="result-list" id="result-list"></div>
+    <div class="result-actions">
+      <button class="btn btn-secondary" id="btn-new-category">Andere Kategorie</button>
+      <button class="btn btn-primary" id="btn-replay">Nochmal spielen</button>
+    </div>
+  </div>
+</div>
+
+<div class="loading-overlay hidden" id="loading">
+  <div class="spinner"></div>
+  <p>Bilder werden geladen…</p>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// DATA  —  [displayName, description, emoji, wikiTitle (EN) | "flag:XX"]
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const C = {
+  filme: {
+    name: 'Filme', emoji: '🎬',
+    items: [
+      ['Der Pate', '1972 · Francis Ford Coppola. Saga der Corleone-Familie — einer der einflussreichsten Filme aller Zeiten.', '🎭', 'The Godfather'],
+      ['Pulp Fiction', '1994 · Quentin Tarantino. Verschachtelte Gangster-Geschichten mit ikonischen Dialogen.', '💼', 'Pulp Fiction'],
+      ['Titanic', '1997 · James Cameron. Liebesgeschichte auf dem berühmtesten Schiff der Welt. 11 Oscars.', '🚢', 'Titanic (1997 film)'],
+      ['The Dark Knight', '2008 · Christopher Nolan. Heath Ledgers legendäre Joker-Performance.', '🦇', 'The Dark Knight'],
+      ['Schindlers Liste', '1993 · Steven Spielberg. Oskar Schindler rettete über 1.000 Juden.', '✡️', "Schindler's List"],
+      ['Inception', '2010 · Christopher Nolan. Ein Dieb stiehlt Geheimnisse aus Träumen in Träumen.', '🌀', 'Inception'],
+      ['Forrest Gump', '1994 · Robert Zemeckis. Ein einfacher Mann erlebt die wichtigsten Momente der US-Geschichte.', '🏃', 'Forrest Gump'],
+      ['Matrix', '1999 · Wachowskis. Was, wenn die Realität nur eine Simulation ist?', '💊', 'The Matrix'],
+      ['Fight Club', '1999 · David Fincher. Ein Büroangestellter gründet einen Underground-Kampfclub.', '👊', 'Fight Club (film)'],
+      ['Der Herr der Ringe', '2001–03 · Peter Jackson. Frodos Reise zum Schicksalsberg. 17 Oscars.', '💍', 'The Lord of the Rings (film series)'],
+      ['Star Wars', '1977 · George Lucas. Die Weltraum-Saga, die die Popkultur für immer veränderte.', '⭐', 'Star Wars (film)'],
+      ['Interstellar', '2014 · Nolan. Ein Astronaut reist durch ein Wurmloch, um die Menschheit zu retten.', '🕳️', 'Interstellar (film)'],
+      ['Gladiator', '2000 · Ridley Scott. Ein römischer General kämpft als Gladiator um Rache.', '⚔️', 'Gladiator (2000 film)'],
+      ['Jurassic Park', '1993 · Spielberg. Dinosaurier werden zum Leben erweckt — und brechen aus.', '🦖', 'Jurassic Park (film)'],
+      ['Avatar', '2009 · James Cameron. Auf Pandora kämpft ein Marine für die Na\'vi. Höchstes Einspielergebnis.', '🌿', 'Avatar (2009 film)'],
+      ['Goodfellas', '1990 · Scorsese. Aufstieg und Fall des Mafia-Mitglieds Henry Hill.', '🔫', 'Goodfellas'],
+      ['The Shawshank Redemption', '1994 · Darabont. Andy Dufresne plant 19 Jahre lang seine Flucht.', '🔑', 'The Shawshank Redemption'],
+      ['Joker', '2019 · Todd Phillips. Düstere Entstehungsgeschichte von Batmans Erzfeind. Oscar für Joaquin Phoenix.', '🃏', 'Joker (2019 film)'],
+      ['Django Unchained', '2012 · Tarantino. Ein befreiter Sklave zieht als Kopfgeldjäger durch den Westen.', '🤠', 'Django Unchained'],
+      ['Avengers: Endgame', '2019 · Das große Finale des Marvel Cinematic Universe.', '🦸', 'Avengers: Endgame'],
+      ['The Wolf of Wall Street', '2013 · Scorsese. Jordan Belforts exzessiver Lebensstil an der Börse.', '💰', 'The Wolf of Wall Street (2013 film)'],
+      ['Zurück in die Zukunft', '1985 · Zemeckis. Marty McFly reist mit einem DeLorean durch die Zeit.', '⏰', 'Back to the Future'],
+      ['Inglourious Basterds', '2009 · Tarantino. Jüdische Kommandoeinheit jagt Nazis im besetzten Frankreich.', '🎖️', 'Inglourious Basterds'],
+      ['Whiplash', '2014 · Chazelle. Junger Schlagzeuger und sein besessener Lehrer. Duell um Perfektion.', '🥁', 'Whiplash (2014 film)'],
+      ['Parasite', '2019 · Bong Joon-ho. Arme Familie infiltriert reichen Haushalt. Erster nicht-englischer Oscar-Gewinner.', '🏠', 'Parasite (2019 film)'],
+      ['Shutter Island', '2010 · Scorsese. US-Marshal ermittelt in einer Psychiatrie — nichts ist, wie es scheint.', '🏝️', 'Shutter Island (film)'],
+      ['Catch Me If You Can', '2002 · Spielberg. Wahre Geschichte des Hochstaplers Frank Abagnale Jr.', '✈️', 'Catch Me If You Can'],
+      ['Das Leben ist schön', '1997 · Benigni. Ein Vater schützt seinen Sohn im KZ mit Fantasie und Humor.', '🌟', 'Life Is Beautiful'],
+    ],
+  },
+  serien: {
+    name: 'Serien', emoji: '📺',
+    items: [
+      ['Breaking Bad', '2008–13 · 5 Staffeln. Chemielehrer wird Drogenbaron. Oft beste Serie aller Zeiten.', '🧪', 'Breaking Bad'],
+      ['Game of Thrones', '2011–19 · 8 Staffeln. Intrigen, Drachen und Krieg um den Eisernen Thron.', '🐉', 'Game of Thrones'],
+      ['Stranger Things', '2016– · Netflix. Kinder in den 80ern kämpfen gegen Monster aus einer Paralleldimension.', '🔦', 'Stranger Things'],
+      ['The Office', '2005–13 · 9 Staffeln. Mockumentary über den Büroalltag bei Dunder Mifflin.', '📎', 'The Office (American TV series)'],
+      ['Friends', '1994–04 · 10 Staffeln. Sechs Freunde in New York — Sitcom-Ikone einer Generation.', '☕', 'Friends'],
+      ['Dark', '2017–20 · 3 Staffeln. Deutsche Netflix-Serie über Zeitreisen in einer Kleinstadt.', '⏳', 'Dark (TV series)'],
+      ['The Sopranos', '1999–07 · 6 Staffeln. Mafia-Boss zwischen Verbrechen und Therapie.', '🎰', 'The Sopranos'],
+      ['The Wire', '2002–08 · 5 Staffeln. Jede Staffel beleuchtet einen anderen Aspekt Baltimores.', '📡', 'The Wire'],
+      ['Chernobyl', '2019 · Mini-Serie. Erschütternde Rekonstruktion der Atomkatastrophe von 1986.', '☢️', 'Chernobyl (miniseries)'],
+      ['Peaky Blinders', '2013–22 · 6 Staffeln. Shelby-Gang kontrolliert Birmingham in den 1920ern.', '🎩', 'Peaky Blinders (TV series)'],
+      ['Narcos', '2015–17 · 3 Staffeln. Pablo Escobar und das kolumbianische Drogenkartell.', '🍃', 'Narcos'],
+      ['Better Call Saul', '2015–22 · 6 Staffeln. Wie Jimmy McGill zu Saul Goodman wurde.', '⚖️', 'Better Call Saul'],
+      ['The Mandalorian', '2019– · Disney+. Kopfgeldjäger und Baby Yoda im Star-Wars-Universum.', '🪖', 'The Mandalorian'],
+      ['The Crown', '2016–23 · 6 Staffeln. Das Leben von Queen Elizabeth II.', '👑', 'The Crown (TV series)'],
+      ['Vikings', '2013–20 · 6 Staffeln. Ragnar Lothbrok und die legendären Wikinger-Raubzüge.', '⚓', 'Vikings (TV series)'],
+      ['Squid Game', '2021– · Netflix. 456 Spieler kämpfen in tödlichen Kinderspielen um Milliarden.', '🦑', 'Squid Game'],
+      ['The Witcher', '2019– · Netflix. Geralt von Riva jagt Monster in einer düsteren Fantasywelt.', '🗡️', 'The Witcher (TV series)'],
+      ['Money Heist', '2017–21 · 5 Staffeln. Genialer Professor plant den größten Raubüberfall Spaniens.', '🎭', 'Money Heist'],
+      ['Sherlock', '2010–17 · 4 Staffeln. Cumberbatch als moderner Sherlock Holmes im heutigen London.', '🔍', 'Sherlock (TV series)'],
+      ['House of Cards', '2013–18 · 6 Staffeln. Frank Underwood manipuliert sich zum US-Präsidenten.', '🏛️', 'House of Cards (American TV series)'],
+      ['True Detective', '2014– · Staffel 1 mit McConaughey & Harrelson gilt als eine der besten überhaupt.', '🔎', 'True Detective'],
+      ['The Last of Us', '2023– · HBO. Joel und Ellie in einer Pilz-Zombie-Welt. Basierend auf dem Videospiel.', '🍄', 'The Last of Us (TV series)'],
+      ['Succession', '2018–23 · 4 Staffeln. Roy-Familie kämpft um Kontrolle eines Medienimperiums.', '💼', 'Succession (TV series)'],
+      ['Ozark', '2017–22 · 4 Staffeln. Finanzberater wäscht Geld für ein Kartell in den Ozark Mountains.', '💵', 'Ozark (TV series)'],
+      ['Seinfeld', '1989–98 · 9 Staffeln. „Die Show über nichts" — New Yorker Alltag als Comedy-Genie.', '🥨', 'Seinfeld'],
+      ['The Walking Dead', '2010–22 · 11 Staffeln. Überlebenskampf in einer Zombie-Apokalypse.', '🧟', 'The Walking Dead (TV series)'],
+      ['Lost', '2004–10 · 6 Staffeln. Flugzeugabsturz auf mysteriöser Insel voller Geheimnisse.', '🏝️', 'Lost (TV series)'],
+      ['Prison Break', '2005–17 · 5 Staffeln. Ingenieur lässt sich einsperren, um seinen Bruder zu befreien.', '🔓', 'Prison Break'],
+    ],
+  },
+  songs: {
+    name: 'Songs', emoji: '🎵',
+    items: [
+      ['Bohemian Rhapsody', 'Queen · 1975. 6-Minuten Rock-Oper — Freddie Mercurys Meisterwerk.', '👑', 'Bohemian Rhapsody'],
+      ['Imagine', 'John Lennon · 1971. Hymne für Frieden und eine Welt ohne Grenzen.', '☮️', 'Imagine (John Lennon song)'],
+      ['Billie Jean', 'Michael Jackson · 1982. Der Song, bei dem MJ erstmals den Moonwalk zeigte.', '🕺', 'Billie Jean'],
+      ['Smells Like Teen Spirit', 'Nirvana · 1991. Der Song, der Grunge zum Mainstream machte.', '🎸', 'Smells Like Teen Spirit'],
+      ['Hotel California', 'Eagles · 1977. Mysteriöses Meisterwerk über ein Hotel, das man nie verlassen kann.', '🏨', 'Hotel California'],
+      ['Stairway to Heaven', 'Led Zeppelin · 1971. 8-minütiges Epos bis zum explosiven Gitarrensolo.', '🪜', 'Stairway to Heaven'],
+      ['Like a Rolling Stone', 'Bob Dylan · 1965. Revolutionierte die Rockmusik.', '🪨', 'Like a Rolling Stone'],
+      ['Hey Jude', 'The Beatles · 1968. McCartneys Aufmunterung mit legendärem „Na-na-na" Outro.', '🎹', 'Hey Jude'],
+      ['Lose Yourself', 'Eminem · 2002. Aus 8 Mile. Erster Hip-Hop-Song mit Oscar.', '🎤', 'Lose Yourself'],
+      ['Shape of You', 'Ed Sheeran · 2017. Über 3,5 Mrd. Spotify-Streams.', '🎶', 'Shape of You'],
+      ['Blinding Lights', 'The Weeknd · 2019. 80er-Synthie trifft modernen Pop. Meistgestreamt auf Spotify.', '✨', 'Blinding Lights'],
+      ['Rolling in the Deep', 'Adele · 2010. Kraftvolle Stimme, gebrochenes Herz. Grammy Song of the Year.', '🔥', 'Rolling in the Deep'],
+      ['Thriller', 'Michael Jackson · 1982. Meistverkauftes Album aller Zeiten. Ikonisches Zombievideo.', '🧟', 'Thriller (song)'],
+      ['Sweet Child O\' Mine', 'Guns N\' Roses · 1987. Slashs legendäres Gitarrenriff.', '🎸', "Sweet Child o' Mine"],
+      ['Don\'t Stop Believin\'', 'Journey · 1981. Ultimativer Feel-Good-Rock-Song.', '🌅', "Don't Stop Believin'"],
+      ['Superstition', 'Stevie Wonder · 1972. Funky Clavinet-Riff. Grammy-Gewinner.', '🎹', 'Superstition (song)'],
+      ['Wonderwall', 'Oasis · 1995. Britpop-Hymne, gespielt auf jeder Akustikgitarre der Welt.', '🎸', 'Wonderwall (song)'],
+      ['Creep', 'Radiohead · 1992. „I\'m a creep, I\'m a weirdo." Außenseiter-Song einer Generation.', '🥀', 'Creep (Radiohead song)'],
+      ['Somebody That I Used to Know', 'Gotye · 2011. Der perfekte Trennungssong mit Kimbra.', '💔', 'Somebody That I Used to Know'],
+      ['Mr. Brightside', 'The Killers · 2003. Seit 20+ Jahren in den UK-Charts. Unsterblicher Indie-Hit.', '🌟', 'Mr. Brightside'],
+      ['Take On Me', 'a-ha · 1985. Norwegischer Synthie-Pop mit legendärem Animationsvideo.', '✏️', 'Take On Me'],
+      ['Dancing Queen', 'ABBA · 1976. Disco-Hymne schlechthin. Nr. 1 in 18 Ländern.', '💃', 'Dancing Queen'],
+      ['Under Pressure', 'Queen & Bowie · 1981. Zwei Legenden, eine ikonische Basslinie.', '💎', 'Under Pressure'],
+      ['Nothing Else Matters', 'Metallica · 1991. Die sensible Seite von Metal.', '🖤', 'Nothing Else Matters'],
+      ['Purple Rain', 'Prince · 1984. 8 Minuten Emotion und eines der besten Gitarrensoli aller Zeiten.', '🌧️', 'Purple Rain (song)'],
+    ],
+  },
+  sportler: {
+    name: 'Sportler', emoji: '🏆',
+    items: [
+      ['Michael Jordan', 'Basketball · 6× NBA-Champion mit den Bulls. Bester Basketballer aller Zeiten.', '🏀', 'Michael Jordan'],
+      ['Lionel Messi', 'Fußball · 8× Ballon d\'Or, Weltmeister 2022. Bester Fußballer der Geschichte.', '⚽', 'Lionel Messi'],
+      ['Cristiano Ronaldo', 'Fußball · 5× Champions League, über 900 Karriere-Tore.', '⚽', 'Cristiano Ronaldo'],
+      ['Usain Bolt', 'Sprint · 8× Olympia-Gold. 100m in 9,58s — Weltrekord bis heute.', '⚡', 'Usain Bolt'],
+      ['Muhammad Ali', 'Boxen · 3× Weltmeister. „Float like a butterfly, sting like a bee."', '🥊', 'Muhammad Ali'],
+      ['Roger Federer', 'Tennis · 20 Grand-Slam-Titel. Eleganz und Fairplay auf dem Platz.', '🎾', 'Roger Federer'],
+      ['LeBron James', 'Basketball · 4× NBA-Champion, 4× MVP. Allzeit-Topscorer der NBA.', '🏀', 'LeBron James'],
+      ['Pelé', 'Fußball · 3× Weltmeister. Über 1.000 Tore. „O Rei" — der König.', '👑', 'Pelé'],
+      ['Serena Williams', 'Tennis · 23 Grand-Slam-Titel im Einzel — Rekord der Open Era.', '🎾', 'Serena Williams'],
+      ['Michael Schumacher', 'Formel 1 · 7× Weltmeister, 91 Siege. Dominierte die F1 wie kein anderer.', '🏎️', 'Michael Schumacher'],
+      ['Lewis Hamilton', 'Formel 1 · 7× Weltmeister, über 100 Siege.', '🏁', 'Lewis Hamilton'],
+      ['Tiger Woods', 'Golf · 15 Major-Titel. Machte Golf zum weltweiten Massenphänomen.', '⛳', 'Tiger Woods'],
+      ['Diego Maradona', 'Fußball · WM 1986: „Hand Gottes" und „Tor des Jahrhunderts" im selben Spiel.', '🇦🇷', 'Diego Maradona'],
+      ['Kobe Bryant', 'Basketball · 5× NBA-Champion mit den LA Lakers. „Mamba Mentality."', '🐍', 'Kobe Bryant'],
+      ['Wayne Gretzky', 'Eishockey · „The Great One" — über 60 NHL-Rekorde.', '🏒', 'Wayne Gretzky'],
+      ['Tom Brady', 'Football · 7× Super-Bowl-Champion. Erfolgreichster NFL-Spieler aller Zeiten.', '🏈', 'Tom Brady'],
+      ['Nadia Comăneci', 'Turnen · Erste perfekte 10,0 bei Olympia 1976. Gerade 14 Jahre alt.', '🤸', 'Nadia Comăneci'],
+      ['Zinédine Zidane', 'Fußball · Weltmeister 1998, 3× FIFA-Weltfußballer.', '🇫🇷', 'Zinedine Zidane'],
+      ['Michael Phelps', 'Schwimmen · 23× Olympia-Gold — erfolgreichster Olympionike aller Zeiten.', '🏊', 'Michael Phelps'],
+      ['Novak Djokovic', 'Tennis · 24 Grand-Slam-Titel — Rekordhalter bei den Herren.', '🎾', 'Novak Djokovic'],
+      ['Mike Tyson', 'Boxen · Jüngster Schwergewichts-Weltmeister mit 20 Jahren.', '🥊', 'Mike Tyson'],
+      ['Franz Beckenbauer', 'Fußball · „Der Kaiser" — Weltmeister als Spieler und Trainer.', '🇩🇪', 'Franz Beckenbauer'],
+      ['Rafael Nadal', 'Tennis · 22 Grand-Slams, 14× French Open — „König des Sand".', '🏆', 'Rafael Nadal'],
+      ['Simone Biles', 'Turnen · 7× Olympia-Gold, 30× WM-Gold. Beste Turnerin aller Zeiten.', '🤸', 'Simone Biles'],
+      ['Carl Lewis', 'Leichtathletik · 9× Olympia-Gold in Sprint und Weitsprung.', '🏃', 'Carl Lewis'],
+    ],
+  },
+  staedte: {
+    name: 'Städte', emoji: '🌍',
+    items: [
+      ['New York', '8,3 Mio. · Freiheitsstatue, Broadway, Wall Street, Central Park.', '🗽', 'New York City'],
+      ['Paris', '2,1 Mio. · Stadt der Liebe — Eiffelturm, Louvre, Croissants.', '🗼', 'Paris'],
+      ['Tokio', '14 Mio. · Größte Metropolregion. Hightech trifft uralte Tempel.', '🏯', 'Tokyo'],
+      ['London', '9 Mio. · Big Ben, Buckingham Palace, Premier League.', '🇬🇧', 'London'],
+      ['Rom', '2,8 Mio. · Ewige Stadt — Kolosseum, Vatikan, 3.000 Jahre Geschichte.', '🏛️', 'Rome'],
+      ['Barcelona', '1,6 Mio. · Gaudís Sagrada Familia, La Rambla, Strand.', '🏖️', 'Barcelona'],
+      ['Dubai', '3,5 Mio. · Burj Khalifa (828m), künstliche Inseln, Luxus in der Wüste.', '🏙️', 'Dubai'],
+      ['Istanbul', '16 Mio. · Brücke zwischen Europa und Asien. Hagia Sophia, Bosporus.', '🕌', 'Istanbul'],
+      ['Sydney', '5,3 Mio. · Opernhaus, Harbour Bridge und Bondi Beach.', '🌊', 'Sydney'],
+      ['Rio de Janeiro', '6,7 Mio. · Christusstatue, Copacabana, Karneval.', '🎉', 'Rio de Janeiro'],
+      ['Amsterdam', '900.000 · Grachten, Fahrräder, Van Gogh Museum.', '🚲', 'Amsterdam'],
+      ['Berlin', '3,7 Mio. · Brandenburger Tor, Clubszene, Geschichte.', '🐻', 'Berlin'],
+      ['Wien', '1,9 Mio. · Lebenswerteste Stadt. Schnitzel, Kaffeehäuser, Klassik.', '🎻', 'Vienna'],
+      ['Prag', '1,3 Mio. · Goldene Stadt — Karlsbrücke, Astronomische Uhr.', '🍺', 'Prague'],
+      ['Singapur', '5,9 Mio. · Reichste Stadt Asiens. Marina Bay Sands, Streetfood.', '🌴', 'Singapore'],
+      ['Bangkok', '11 Mio. · Tempel, Tuk-Tuks, legendäres Streetfood.', '🛕', 'Bangkok'],
+      ['Lissabon', '550.000 · Hügelige Altstadt, Pastéis de Nata, Fado-Musik.', '🚃', 'Lisbon'],
+      ['Buenos Aires', '3 Mio. · Tango-Hauptstadt. La Boca, Steakhäuser.', '💃', 'Buenos Aires'],
+      ['Kapstadt', '4,6 Mio. · Tafelberg, Robben Island, atemberaubende Küste.', '🏔️', 'Cape Town'],
+      ['San Francisco', '870.000 · Golden Gate Bridge, Silicon Valley, Cable Cars.', '🌉', 'San Francisco'],
+      ['München', '1,5 Mio. · Oktoberfest, Englischer Garten, FC Bayern.', '🍻', 'Munich'],
+      ['Venedig', '260.000 · Gondeln, Markusplatz und bunte Murano-Inseln.', '🚣', 'Venice'],
+      ['Kyoto', '1,5 Mio. · 2.000 Tempel, Geisha-Kultur, Zen-Gärten.', '⛩️', 'Kyoto'],
+      ['Marrakesch', '1 Mio. · Djemaa el-Fna, Souks, Riads und Farben.', '🧡', 'Marrakech'],
+      ['Havanna', '2,1 Mio. · Oldtimer, Rum, Salsa und koloniale Architektur.', '🚗', 'Havana'],
+      ['Vancouver', '2,5 Mio. · Berge, Meer und Wolkenkratzer.', '🏔️', 'Vancouver'],
+      ['Stockholm', '1 Mio. · Nordisches Design, 14 Inseln, ABBA-Museum.', '🇸🇪', 'Stockholm'],
+      ['Athen', '3,1 Mio. · Wiege der Demokratie. Akropolis, Parthenon.', '🏛️', 'Athens'],
+      ['Seoul', '9,7 Mio. · K-Pop, K-Food, Hightech und Paläste.', '🇰🇷', 'Seoul'],
+    ],
+  },
+  essen: {
+    name: 'Essen', emoji: '🍕',
+    items: [
+      ['Pizza', 'Italien · Margherita 1889 in den Farben der italienischen Flagge.', '🍕', 'Pizza'],
+      ['Sushi', 'Japan · Im 19. Jh. in Tokio als Fast Food erfunden.', '🍣', 'Sushi'],
+      ['Burger', 'USA · McDonald\'s verkauft täglich 6,5 Millionen Stück.', '🍔', 'Hamburger'],
+      ['Pasta', 'Italien · Über 350 verschiedene Formen. Nationalstolz.', '🍝', 'Pasta'],
+      ['Tacos', 'Mexiko · Mais-Tortilla mit Fleisch, Salsa, Koriander, Limette.', '🌮', 'Taco'],
+      ['Schnitzel', 'Österreich · Paniertes Kalbfleisch. Wiener Schnitzel ist UNESCO-Kulturerbe.', '🥩', 'Wiener schnitzel'],
+      ['Ramen', 'Japan · Nudelsuppe mit Chashu-Schweinefleisch und Ei. Japans Soulfood.', '🍜', 'Ramen'],
+      ['Döner Kebab', 'Türkei/Berlin · Kadir Nurman eröffnete 1972 den ersten Stand in Berlin.', '🥙', 'Doner kebab'],
+      ['Paella', 'Spanien · Reisgericht mit Safran aus Valencia.', '🥘', 'Paella'],
+      ['Pad Thai', 'Thailand · Gebratene Reisnudeln mit Garnelen und Erdnüssen. Nationalgericht.', '🍜', 'Pad thai'],
+      ['Steak', 'Weltweit · Argentinien und USA streiten um das beste der Welt.', '🥩', 'Steak'],
+      ['Currywurst', 'Berlin · Erfunden 1949 von Herta Heuwer. Jährlich 800 Mio. Stück.', '🌭', 'Currywurst'],
+      ['Dim Sum', 'China · Kleine gedämpfte Häppchen. Kantonesische Teehaus-Tradition.', '🥟', 'Dim sum'],
+      ['Croissant', 'Frankreich · Butteriges Blätterteig-Gebäck. Eigentlich aus Wien.', '🥐', 'Croissant'],
+      ['Pho', 'Vietnam · Aromatische Reisnudelsuppe mit Rindfleisch und Kräutern.', '🍲', 'Pho'],
+      ['Fish & Chips', 'UK · Frittierter Fisch im Bierteig mit Pommes seit dem 19. Jh.', '🐟', 'Fish and chips'],
+      ['Gyros', 'Griechenland · Fleisch vom Drehspieß mit Tzatziki und Pita.', '🥙', 'Gyros'],
+      ['Biryani', 'Indien · Aromatisches Reisgericht mit Gewürzen und Safran.', '🍛', 'Biryani'],
+      ['Ceviche', 'Peru · Roher Fisch in Limettensaft „gegart". Perus Stolz.', '🐟', 'Ceviche'],
+      ['Poutine', 'Kanada · Pommes mit Bratensauce und Cheese Curds.', '🍟', 'Poutine'],
+      ['Falafel', 'Naher Osten · Frittierte Kichererbsen-Bällchen. Veganer Klassiker.', '🧆', 'Falafel'],
+      ['Pierogi', 'Polen · Gefüllte Teigtaschen mit Kartoffeln, Quark oder Fleisch.', '🥟', 'Pierogi'],
+      ['Tiramisu', 'Italien · Mascarpone, Espresso, Kakao. „Zieh mich hoch."', '🍰', 'Tiramisu'],
+      ['Crêpes', 'Frankreich · Hauchdünne Pfannkuchen — süß oder herzhaft.', '🥞', 'Crêpe'],
+      ['Pulled Pork', 'USA · Stundenlang geräuchertes Schweinefleisch. BBQ-Kultur.', '🐷', 'Pulled pork'],
+      ['Lasagne', 'Italien · Geschichtete Pasta mit Bolognese und Béchamel.', '🧀', 'Lasagne'],
+      ['Brezen', 'Bayern · Laugengebäck mit Salz. Biergartenbegleiter.', '🥨', 'Pretzel'],
+      ['Poke Bowl', 'Hawaii · Gewürfelter Fisch auf Reis. Weltweiter Health-Food-Trend.', '🥗', 'Poke (dish)'],
+    ],
+  },
+  automarken: {
+    name: 'Automarken', emoji: '🚗',
+    items: [
+      ['Mercedes-Benz', 'Gegr. 1926 · Stuttgart. Erfinder des Automobils (1886).', '⭐', 'Mercedes-Benz'],
+      ['BMW', 'Gegr. 1916 · München. „Freude am Fahren."', '🔵', 'BMW'],
+      ['Audi', 'Gegr. 1909 · Ingolstadt. „Vorsprung durch Technik."', '⚙️', 'Audi'],
+      ['Porsche', 'Gegr. 1931 · Stuttgart. Der 911 — Sportwagen-Ikone seit 1963.', '🏁', 'Porsche'],
+      ['Ferrari', 'Gegr. 1947 · Maranello. Das springende Pferd — Formel 1 und Traumauto.', '🐎', 'Ferrari'],
+      ['Lamborghini', 'Gegr. 1963 · Aus Trotz gegen Enzo Ferrari. Stier-Logo, V12, Extravaganz.', '🐂', 'Lamborghini'],
+      ['Tesla', 'Gegr. 2003 · Kalifornien. Elon Musks E-Auto-Revolution.', '⚡', 'Tesla, Inc.'],
+      ['Toyota', 'Gegr. 1937 · Japan. Größter Autobauer der Welt.', '🇯🇵', 'Toyota'],
+      ['Volkswagen', 'Gegr. 1937 · Wolfsburg. Der Käfer ist das meistverkaufte Auto der Geschichte.', '🚙', 'Volkswagen'],
+      ['Ford', 'Gegr. 1903 · Detroit. Henry Ford erfand das Fließband. Der Mustang ist Legende.', '🐴', 'Ford Motor Company'],
+      ['Chevrolet', 'Gegr. 1911 · Detroit. Corvette, Camaro — Amerikas beliebteste Marke.', '🇺🇸', 'Chevrolet'],
+      ['Aston Martin', 'Gegr. 1913 · England. James Bonds Auto der Wahl.', '🕶️', 'Aston Martin'],
+      ['Bentley', 'Gegr. 1919 · England. Handgefertigter Luxus aus Crewe.', '🎩', 'Bentley'],
+      ['Rolls-Royce', 'Gegr. 1906 · England. Spirit of Ecstasy. Ultimativer Luxus.', '👑', 'Rolls-Royce Motor Cars'],
+      ['Maserati', 'Gegr. 1914 · Bologna. Dreizack-Logo. Italienischer Gran Turismo.', '🔱', 'Maserati'],
+      ['McLaren', 'Gegr. 1963 · England. Vom F1-Rennstall zum Supersportwagen-Hersteller.', '🏎️', 'McLaren Automotive'],
+      ['Bugatti', 'Gegr. 1909 · Frankreich. Chiron: über 400 km/h. Ab 3 Mio. Euro.', '💨', 'Bugatti'],
+      ['Jaguar', 'Gegr. 1922 · England. E-Type: „Schönstes Auto aller Zeiten" (Enzo Ferrari).', '🐆', 'Jaguar Cars'],
+      ['Land Rover', 'Gegr. 1948 · England. Vom Farmfahrzeug zur Geländeikone.', '🌍', 'Land Rover'],
+      ['Volvo', 'Gegr. 1927 · Schweden. Erfinder des Dreipunkt-Gurts (1959).', '🛡️', 'Volvo Cars'],
+      ['Alfa Romeo', 'Gegr. 1910 · Mailand. Italiens leidenschaftlichste Marke.', '🇮🇹', 'Alfa Romeo'],
+      ['Lexus', 'Gegr. 1989 · Japan. Toyotas Luxusmarke. Leise Perfektion.', '💎', 'Lexus'],
+      ['Subaru', 'Gegr. 1953 · Japan. Allrad-Spezialist. Rallye-Champion.', '🌟', 'Subaru'],
+      ['Mazda', 'Gegr. 1920 · Hiroshima. MX-5 ist der meistverkaufte Roadster.', '🔴', 'Mazda'],
+      ['Mini', 'Gegr. 1959 · England. Kultstatus seit den Swinging Sixties.', '🇬🇧', 'Mini (marque)'],
+      ['Jeep', 'Gegr. 1941 · USA. Im 2. Weltkrieg geboren. Freiheit und Offroad.', '🪖', 'Jeep'],
+      ['Dodge', 'Gegr. 1900 · USA. Challenger, Charger — pure Muscle-Car-Power.', '💪', 'Dodge'],
+      ['Hyundai', 'Gegr. 1967 · Südkorea. Vom Billigauto zur Design-Marke.', '🇰🇷', 'Hyundai'],
+    ],
+  },
+  videospiele: {
+    name: 'Videospiele', emoji: '🎮',
+    items: [
+      ['Minecraft', '2011 · Über 300 Mio. verkauft — meistverkauftes Spiel aller Zeiten.', '⛏️', 'Minecraft'],
+      ['GTA V', '2013 · Über 200 Mio. verkauft. Open World in Los Santos.', '🚗', 'Grand Theft Auto V'],
+      ['Zelda: Breath of the Wild', '2017 · Nintendo. Revolutionierte Open-World-Games.', '🗡️', 'The Legend of Zelda: Breath of the Wild'],
+      ['Red Dead Redemption 2', '2018 · Rockstar. Wilder Westen in atemberaubender Detailtreue.', '🤠', 'Red Dead Redemption 2'],
+      ['The Witcher 3', '2015 · CD Projekt Red. Riesige Fantasywelt, über 250 Stunden Content.', '🐺', 'The Witcher 3: Wild Hunt'],
+      ['Super Mario Bros.', '1985 · Nintendo. Der Klempner, der die Videospielindustrie rettete.', '🍄', 'Super Mario Bros.'],
+      ['Tetris', '1985 · In der Sowjetunion erfunden. Über 500 Mio. verkauft.', '🧱', 'Tetris'],
+      ['God of War', '2018 · Kratos als Vater in der nordischen Mythologie. Game of the Year.', '⚡', 'God of War (2018 video game)'],
+      ['Elden Ring', '2022 · FromSoftware. Story von George R.R. Martin. Über 25 Mio. verkauft.', '💍', 'Elden Ring'],
+      ['Fortnite', '2017 · 400 Mio. registrierte Spieler. Battle Royale einer Generation.', '🪂', 'Fortnite'],
+      ['The Last of Us', '2013 · Naughty Dog. Emotionalste Story der Gaming-Geschichte.', '🍄', 'The Last of Us'],
+      ['Dark Souls', '2011 · FromSoftware. „You Died" — das Genre der brutalen Bosskämpfe.', '🔥', 'Dark Souls'],
+      ['Skyrim', '2011 · Bethesda. Riesige Fantasywelt mit Drachen und hunderten Quests.', '🐉', 'The Elder Scrolls V: Skyrim'],
+      ['Portal 2', '2011 · Valve. Geniales Puzzle-Spiel. „The cake is a lie."', '🕳️', 'Portal 2'],
+      ['Half-Life 2', '2004 · Valve. Revolutionierte Physik in Spielen.', '🔬', 'Half-Life 2'],
+      ['Resident Evil 4', '2005 · Capcom. Definierte Survival Horror neu.', '🧟', 'Resident Evil 4'],
+      ['FIFA / EA FC', '1993– · Über 325 Mio. verkauft in der Reihe.', '⚽', 'EA Sports FC'],
+      ['Call of Duty: Modern Warfare', '2007 · Revolutionierte den Online-Shooter.', '🎯', 'Call of Duty 4: Modern Warfare'],
+      ['Halo', '2001 · Master Chief rettete die Xbox. Milliarden-Franchise.', '🪖', 'Halo (franchise)'],
+      ['Pokémon', '1996 · „Schnapp sie dir alle!" Größtes Medien-Franchise der Welt.', '⚡', 'Pokémon Red and Blue'],
+      ['Among Us', '2018 · Wer ist der Verräter? Ging 2020 viral. 500 Mio. Spieler.', '🔪', 'Among Us'],
+      ['Cyberpunk 2077', '2020 · Night City der Zukunft. Nach Updates ein Meisterwerk.', '🌃', 'Cyberpunk 2077'],
+      ['Stardew Valley', '2016 · Ein Entwickler baute allein das gemütlichste Farm-Spiel.', '🌾', 'Stardew Valley'],
+      ['Mario Kart', '1992– · Das Rennspiel, das Freundschaften zerstört.', '🏎️', 'Mario Kart'],
+      ['Animal Crossing', '2001– · Entspanntes Inselleben. New Horizons: 44 Mio. verkauft.', '🏝️', 'Animal Crossing: New Horizons'],
+      ['Doom', '1993 · id Software. Der Urknall des Ego-Shooters.', '😈', 'Doom (1993 video game)'],
+      ['BioShock', '2007 · „Would you kindly?" Unterwasser-Dystopie Rapture.', '💧', 'BioShock'],
+    ],
+  },
+  laender: {
+    name: 'Länder', emoji: '🗺️',
+    items: [
+      ['Italien', '60 Mio. · Meiste UNESCO-Welterbestätten. Pizza, Pasta, Dolce Vita.', '🇮🇹', 'flag:it'],
+      ['Japan', '125 Mio. · Hightech und Tradition. Sushi, Anime, Kirschblüten.', '🇯🇵', 'flag:jp'],
+      ['Frankreich', '68 Mio. · Meistbesuchtes Land der Welt. Wein, Käse, Kultur.', '🇫🇷', 'flag:fr'],
+      ['Spanien', '48 Mio. · Tapas, Flamenco, Strände. Nr. 2 der Touristen.', '🇪🇸', 'flag:es'],
+      ['USA', '335 Mio. · Drittgrößtes Land. Hollywood, Silicon Valley, Grand Canyon.', '🇺🇸', 'flag:us'],
+      ['Brasilien', '215 Mio. · Amazonas, Karneval, 5× Fußball-Weltmeister.', '🇧🇷', 'flag:br'],
+      ['Australien', '26 Mio. · Kontinent und Land. Great Barrier Reef, Koalas.', '🇦🇺', 'flag:au'],
+      ['Kanada', '40 Mio. · Zweitgrößtes Land. Rocky Mountains, Ahornsirup.', '🇨🇦', 'flag:ca'],
+      ['Deutschland', '84 Mio. · Größte Volkswirtschaft Europas. Bier, Autos.', '🇩🇪', 'flag:de'],
+      ['Griechenland', '10 Mio. · Wiege der Demokratie. 6.000 Inseln, Akropolis.', '🇬🇷', 'flag:gr'],
+      ['Thailand', '72 Mio. · „Land des Lächelns." Traumstrände, Tempel.', '🇹🇭', 'flag:th'],
+      ['Mexiko', '130 Mio. · Azteken-Erbe, Tacos, Tequila. 35+ UNESCO-Stätten.', '🇲🇽', 'flag:mx'],
+      ['Neuseeland', '5 Mio. · Herr-der-Ringe-Drehorte. Fjorde, Vulkane, Māori.', '🇳🇿', 'flag:nz'],
+      ['Norwegen', '5,5 Mio. · Fjorde, Nordlichter. Höchster Lebensstandard.', '🇳🇴', 'flag:no'],
+      ['Portugal', '10 Mio. · Seefahrernation. Pastéis de Nata, Algarve.', '🇵🇹', 'flag:pt'],
+      ['Schweiz', '9 Mio. · Alpen, Schokolade, Uhren, direkte Demokratie.', '🇨🇭', 'flag:ch'],
+      ['Österreich', '9 Mio. · Mozart, Wiener Schnitzel, Skifahren.', '🇦🇹', 'flag:at'],
+      ['Südkorea', '52 Mio. · K-Pop, Samsung, Kimchi. In 60 Jahren zur Hightech-Nation.', '🇰🇷', 'flag:kr'],
+      ['Argentinien', '46 Mio. · Tango, Steak, Patagonien. Messi-Mania.', '🇦🇷', 'flag:ar'],
+      ['Island', '380.000 · Vulkane, Geysire, Gletscher, Nordlichter.', '🇮🇸', 'flag:is'],
+      ['Kroatien', '3,8 Mio. · Adriaküste, Dubrovnik, Plitvicer Seen.', '🇭🇷', 'flag:hr'],
+      ['Irland', '5 Mio. · Grüne Insel. Guinness, Cliffs of Moher.', '🇮🇪', 'flag:ie'],
+      ['Türkei', '85 Mio. · Brücke zweier Kontinente. Hagia Sophia, Kebab.', '🇹🇷', 'flag:tr'],
+      ['Indien', '1,4 Mrd. · Bevölkerungsreichstes Land. Taj Mahal, Bollywood.', '🇮🇳', 'flag:in'],
+      ['Ägypten', '110 Mio. · Pyramiden von Gizeh — letztes Weltwunder der Antike.', '🇪🇬', 'flag:eg'],
+      ['Marokko', '37 Mio. · Sahara, Marrakesch, Berberkultur.', '🇲🇦', 'flag:ma'],
+      ['Vietnam', '100 Mio. · Halong-Bucht, Pho, boomt als Reiseziel.', '🇻🇳', 'flag:vn'],
+      ['Südafrika', '60 Mio. · Safaris, Kapstadt, Mandela. 11 Amtssprachen.', '🇿🇦', 'flag:za'],
+    ],
+  },
+  fussball: {
+    name: 'Fußballvereine', emoji: '⚽',
+    items: [
+      ['Real Madrid', 'Gegr. 1902 · 15× Champions League — Rekordhalter.', '🤍', 'Real Madrid CF'],
+      ['FC Barcelona', 'Gegr. 1899 · „Més que un club." Messi, Cruyff, Tiki-Taka.', '🔴', 'FC Barcelona'],
+      ['Bayern München', 'Gegr. 1900 · 33× Deutscher Meister, 6× Champions League.', '🔴', 'FC Bayern Munich'],
+      ['Manchester United', 'Gegr. 1878 · Old Trafford, Ferguson-Ära, 13 Premier-League-Titel.', '🔴', 'Manchester United F.C.'],
+      ['Liverpool FC', 'Gegr. 1892 · Anfield, „You\'ll Never Walk Alone." 6× CL.', '🔴', 'Liverpool F.C.'],
+      ['Juventus Turin', 'Gegr. 1897 · 36× Scudetto. „Die alte Dame."', '⬛', 'Juventus F.C.'],
+      ['AC Milan', 'Gegr. 1899 · 7× Champions League. Baresi, Maldini.', '🔴', 'AC Milan'],
+      ['Paris Saint-Germain', 'Gegr. 1970 · Katarische Eigentümer. Neymar, Mbappé.', '🔵', 'Paris Saint-Germain F.C.'],
+      ['Borussia Dortmund', 'Gegr. 1909 · „Gelbe Wand" — 25.000 Stehplätze, lauteste Fans.', '💛', 'Borussia Dortmund'],
+      ['Chelsea FC', 'Gegr. 1905 · 2× Champions League. Stamford Bridge.', '🔵', 'Chelsea F.C.'],
+      ['Arsenal', 'Gegr. 1886 · „The Invincibles" 2003/04 — ohne Niederlage.', '🔴', 'Arsenal F.C.'],
+      ['Manchester City', 'Gegr. 1880 · Guardiola. 2023 Triple: PL, FA Cup, CL.', '🩵', 'Manchester City F.C.'],
+      ['Inter Mailand', 'Gegr. 1908 · 3× Champions League. Milans anderer Gigant.', '⚫', 'Inter Milan'],
+      ['Ajax Amsterdam', 'Gegr. 1900 · Cruyff-Schule. Legendäre Jugendakademie.', '🔴', 'AFC Ajax'],
+      ['Atletico Madrid', 'Gegr. 1903 · Simeones Kampfgeist. Madrids Arbeiterclub.', '🔴', 'Atlético Madrid'],
+      ['Tottenham Hotspur', 'Gegr. 1882 · Nord-London-Rivale. Milliarden-Stadion.', '⚪', 'Tottenham Hotspur F.C.'],
+      ['AS Rom', 'Gegr. 1927 · Tottis Stadt. Stadio Olimpico.', '🟡', 'AS Roma'],
+      ['SSC Neapel', 'Gegr. 1926 · Maradonas Verein. Scudetto 2023 nach 33 Jahren.', '🔵', 'S.S.C. Napoli'],
+      ['Benfica Lissabon', 'Gegr. 1904 · 37× Meister. Eusébios Verein.', '🔴', 'S.L. Benfica'],
+      ['FC Porto', 'Gegr. 1893 · 2× CL-Sieger. Mourinhos Durchbruch 2004.', '🔵', 'FC Porto'],
+      ['Celtic Glasgow', 'Gegr. 1887 · „Paradise." 1967 erster britischer Europapokalsieger.', '🍀', 'Celtic F.C.'],
+      ['Olympique Marseille', 'Gegr. 1899 · Einziger französischer CL-Sieger (1993).', '⚪', 'Olympique de Marseille'],
+      ['Galatasaray', 'Gegr. 1905 · Istanbuls größter Verein. UEFA-Cup 2000.', '🟡', 'Galatasaray S.K. (football)'],
+      ['Flamengo', 'Gegr. 1895 · 40 Mio. Fans — größte Fanbasis der Welt.', '🔴', 'CR Flamengo'],
+      ['Boca Juniors', 'Gegr. 1905 · La Bombonera — lautestes Stadion Südamerikas.', '💛', 'Boca Juniors'],
+      ['RB Leipzig', 'Gegr. 2009 · Red-Bull-Projekt — umstritten, aber erfolgreich.', '⚪', 'RB Leipzig'],
+      ['Eintracht Frankfurt', 'Gegr. 1899 · Europa-League-Sieger 2022.', '🦅', 'Eintracht Frankfurt'],
+      ['Schalke 04', 'Gegr. 1904 · Ruhrpott-Identität. „Blau und Weiß."', '🔵', 'FC Schalke 04'],
+    ],
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// IMAGE CACHE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const imgCache = {};
+
+async function fetchImage(wikiKey) {
+  if (!wikiKey) return null;
+  if (imgCache[wikiKey] !== undefined) return imgCache[wikiKey];
+
+  // Country flags
+  if (wikiKey.startsWith('flag:')) {
+    const url = `https://flagcdn.com/w320/${wikiKey.slice(5)}.png`;
+    imgCache[wikiKey] = url;
+    return url;
+  }
+
+  try {
+    const resp = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiKey)}`);
+    if (!resp.ok) { imgCache[wikiKey] = null; return null; }
+    const data = await resp.json();
+    const url = data.thumbnail?.source || data.originalimage?.source || null;
+    imgCache[wikiKey] = url;
+    return url;
+  } catch {
+    imgCache[wikiKey] = null;
+    return null;
+  }
+}
+
+async function prefetchImages(items) {
+  await Promise.allSettled(items.map(it => fetchImage(it[3])));
+}
+
+function imgHTML(wikiKey, emoji, cssClass = '') {
+  const url = imgCache[wikiKey];
+  if (url) {
+    return `<img src="${url}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<span class=\\'${cssClass}\\'>${emoji}</span>'">`
+  }
+  return `<span class="${cssClass}">${emoji}</span>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let state = { categoryKey: null, items: [], slots: [], currentIndex: 0 };
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SCREENS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function renderCategories() {
+  const grid = document.getElementById('category-grid');
+  grid.innerHTML = '';
+  for (const [key, cat] of Object.entries(C)) {
+    const btn = document.createElement('button');
+    btn.className = 'category-btn';
+    btn.innerHTML = `<span class="emoji">${cat.emoji}</span>${cat.name}`;
+    btn.addEventListener('click', () => startGame(key));
+    grid.appendChild(btn);
+  }
+}
+
+async function startGame(categoryKey) {
+  state.categoryKey = categoryKey;
+  state.items = shuffle(C[categoryKey].items).slice(0, 10);
+  state.slots = new Array(10).fill(null);
+  state.currentIndex = 0;
+
+  // Show loading, prefetch images
+  document.getElementById('loading').classList.remove('hidden');
+  await prefetchImages(state.items);
+  document.getElementById('loading').classList.add('hidden');
+
+  showScreen('screen-game');
+  renderGame();
+}
+
+function renderGame() {
+  const dotsEl = document.getElementById('progress-dots');
+  dotsEl.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'progress-dot' + (i < state.currentIndex ? ' done' : '') + (i === state.currentIndex ? ' current' : '');
+    dotsEl.appendChild(dot);
+  }
+  document.getElementById('progress-label').textContent = `${state.currentIndex + 1} von 10`;
+
+  const cur = state.items[state.currentIndex];
+  document.getElementById('current-img-wrap').innerHTML = imgHTML(cur[3], cur[2], 'emoji-fallback');
+  document.getElementById('current-name').textContent = cur[0];
+  document.getElementById('current-desc').textContent = cur[1];
+
+  const slotsEl = document.getElementById('slots');
+  slotsEl.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'slot';
+    const item = state.slots[i];
+    if (item) {
+      slot.classList.add('taken');
+      slot.innerHTML = `
+        <div class="rank">${i + 1}</div>
+        <div class="slot-thumb">${imgHTML(item[3], item[2], 'emoji-sm')}</div>
+        <div class="slot-content">
+          <div class="slot-name">${item[0]}</div>
+          <div class="slot-desc">${item[1].split('.')[0]}</div>
+        </div>`;
+    } else {
+      slot.innerHTML = `<div class="rank">${i + 1}</div><div class="slot-content"><div class="slot-name">—</div></div>`;
+      slot.addEventListener('click', () => placeItem(i));
+    }
+    slotsEl.appendChild(slot);
+  }
+}
+
+function placeItem(slotIndex) {
+  if (state.currentIndex >= 10) return;
+  const item = state.items[state.currentIndex];
+  state.slots[slotIndex] = item;
+  state.currentIndex++;
+  if (state.currentIndex >= 10) {
+    // Last item placed — update only the slot visually, then show result
+    const s = document.getElementById('slots').children[slotIndex];
+    if (s) {
+      s.classList.add('taken', 'just-placed');
+      s.innerHTML = `
+        <div class="rank">${slotIndex + 1}</div>
+        <div class="slot-thumb">${imgHTML(item[3], item[2], 'emoji-sm')}</div>
+        <div class="slot-content">
+          <div class="slot-name">${item[0]}</div>
+          <div class="slot-desc">${item[1].split('.')[0]}</div>
+        </div>`;
+      s.replaceWith(s.cloneNode(true)); // remove click handler
+    }
+    document.getElementById('progress-label').textContent = '10 von 10';
+    setTimeout(() => showResult(), 600);
+    return;
+  }
+  renderGame();
+  const s = document.getElementById('slots').children[slotIndex];
+  if (s) s.classList.add('just-placed');
+}
+
+function showResult() {
+  const cat = C[state.categoryKey];
+  document.getElementById('result-category').textContent = cat.emoji + ' ' + cat.name;
+  const list = document.getElementById('result-list');
+  list.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const item = state.slots[i];
+    const el = document.createElement('div');
+    el.className = 'result-item';
+    el.style.animationDelay = `${i * 0.06}s`;
+    el.innerHTML = `
+      <div class="rank">${i + 1}</div>
+      <div class="result-thumb">${imgHTML(item[3], item[2], 'emoji-md')}</div>
+      <div class="result-info">
+        <div class="result-name">${item[0]}</div>
+        <div class="result-desc">${item[1]}</div>
+      </div>`;
+    list.appendChild(el);
+  }
+  showScreen('screen-result');
+}
+
+document.getElementById('btn-new-category').addEventListener('click', () => showScreen('screen-menu'));
+document.getElementById('btn-replay').addEventListener('click', () => startGame(state.categoryKey));
+
+renderCategories();
+
+// Generate apple-touch-icon as PNG from canvas (iOS needs PNG)
+(function() {
+  const c = document.createElement('canvas');
+  c.width = 180; c.height = 180;
+  const ctx = c.getContext('2d');
+  // Background gradient
+  const g = ctx.createLinearGradient(0, 0, 180, 180);
+  g.addColorStop(0, '#6c5ce7'); g.addColorStop(1, '#4a3db5');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.roundRect(0, 0, 180, 180, 32);
+  ctx.fill();
+  // "TOP" text
+  ctx.fillStyle = '#f0a500';
+  ctx.font = '900 42px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('TOP', 90, 68);
+  // "10" text
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '900 72px -apple-system, sans-serif';
+  ctx.fillText('10', 90, 140);
+  // Set as apple-touch-icon
+  const link = document.querySelector('link[rel="apple-touch-icon"]');
+  if (link) link.href = c.toDataURL('image/png');
+})();
+
+// Register Service Worker for PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>

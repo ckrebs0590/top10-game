@@ -1,0 +1,18 @@
+{
+  "name": "Top 10 Ranking Game",
+  "short_name": "Top 10",
+  "description": "Erstelle dein persönliches Ranking! 10 Einträge, 10 Plätze.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f0f1a",
+  "theme_color": "#6c5ce7",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
