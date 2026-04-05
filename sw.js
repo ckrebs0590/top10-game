@@ -28,6 +28,12 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
+  // Socket.IO — always network, never cache
+  if (url.pathname.startsWith('/socket.io')) {
+    e.respondWith(fetch(e.request).catch(() => new Response('', { status: 503 })));
+    return;
+  }
+
   // Wikipedia API & external images — network only (don't cache large images)
   if (url.hostname !== location.hostname) {
     e.respondWith(fetch(e.request).catch(() => new Response('', { status: 503 })));

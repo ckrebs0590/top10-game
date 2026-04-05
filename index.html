@@ -227,12 +227,178 @@
     .result-item .rank { width: 24px; height: 24px; font-size: 0.75rem; }
     .result-item .result-thumb { width: 28px; height: 28px; }
   }
+
+  /* ═══ MODE SELECT ═══ */
+  #screen-mode.active { overflow-y: auto; padding-bottom: env(safe-area-inset-bottom); }
+  .mode-buttons { display: flex; flex-direction: column; gap: 14px; margin-top: 24px; }
+  .mode-btn {
+    background: var(--surface); border: 2px solid var(--border); border-radius: 16px;
+    padding: 24px 20px; cursor: pointer; transition: all 0.2s;
+    text-align: left; color: var(--text); display: flex; align-items: center; gap: 16px;
+  }
+  .mode-btn:hover, .mode-btn:active { border-color: var(--primary); background: var(--surface2); }
+  .mode-btn:active { transform: scale(0.98); }
+  .mode-btn .mode-icon { font-size: 2.2rem; flex-shrink: 0; }
+  .mode-btn .mode-label { font-size: 1.1rem; font-weight: 700; }
+  .mode-btn .mode-desc { font-size: 0.8rem; color: var(--text-dim); margin-top: 2px; }
+
+  /* ═══ LOBBY ═══ */
+  #screen-lobby.active { overflow-y: auto; justify-content: center; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
+  .lobby-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 24px; width: 100%; max-width: 400px; text-align: center;
+  }
+  .lobby-card h2 { font-size: 1.3rem; font-weight: 800; margin-bottom: 16px; }
+  .lobby-input {
+    width: 100%; padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text); font-size: 1rem; outline: none;
+    margin-bottom: 12px; text-align: center;
+  }
+  .lobby-input:focus { border-color: var(--primary); }
+  .lobby-input::placeholder { color: var(--text-dim2); }
+  .lobby-or { color: var(--text-dim); font-size: 0.85rem; margin: 16px 0; }
+  .room-code-display {
+    font-size: 2.5rem; font-weight: 900; letter-spacing: 12px;
+    color: var(--accent); margin: 16px 0;
+    font-family: 'Courier New', monospace;
+  }
+  .room-code-input {
+    width: 160px; padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border);
+    background: var(--surface2); color: var(--accent); font-size: 1.8rem; font-weight: 900;
+    letter-spacing: 8px; text-align: center; outline: none; text-transform: uppercase;
+    font-family: 'Courier New', monospace;
+  }
+  .room-code-input:focus { border-color: var(--primary); }
+  .lobby-status { color: var(--text-dim); font-size: 0.9rem; margin-top: 12px; }
+  .lobby-players { display: flex; justify-content: center; gap: 24px; margin: 16px 0; }
+  .lobby-player {
+    text-align: center; padding: 12px 20px; border-radius: 12px;
+    background: var(--surface2); border: 1px solid var(--border); min-width: 120px;
+  }
+  .lobby-player .lp-icon { font-size: 1.5rem; margin-bottom: 4px; }
+  .lobby-player .lp-name { font-size: 0.9rem; font-weight: 600; }
+  .lobby-player.waiting { opacity: 0.4; }
+  .lobby-error { color: #e74c3c; font-size: 0.85rem; margin-top: 8px; }
+
+  /* ═══ MP GAME HEADER ═══ */
+  .mp-header {
+    text-align: center; padding: 6px 0; flex-shrink: 0;
+    font-size: 0.8rem; color: var(--accent); font-weight: 700;
+  }
+  .mp-criterion {
+    font-size: 0.7rem; color: var(--text-dim); font-weight: 400; margin-top: 2px;
+  }
+  .waiting-overlay {
+    position: absolute; inset: 0; background: rgba(15,15,26,0.9); z-index: 50;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+    border-radius: 14px;
+  }
+  .waiting-overlay .spinner {
+    width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  .waiting-overlay p { color: var(--text-dim); font-size: 0.9rem; }
+
+  /* ═══ ROUND RESULT ═══ */
+  #screen-mp-result.active { overflow-y: auto; padding-bottom: env(safe-area-inset-bottom); }
+  .round-result-header { text-align: center; padding: 10px 0 6px; flex-shrink: 0; }
+  .round-result-header h2 { font-size: 1.2rem; font-weight: 800; }
+  .round-result-header .round-winner {
+    font-size: 0.9rem; font-weight: 700; margin-top: 4px;
+  }
+  .round-result-header .round-winner.win { color: var(--success); }
+  .round-result-header .round-winner.lose { color: #e74c3c; }
+  .round-result-header .round-winner.tie { color: var(--accent); }
+
+  .score-bar {
+    display: flex; justify-content: space-around; padding: 8px 0; flex-shrink: 0;
+    font-size: 0.85rem; font-weight: 700;
+  }
+  .score-bar .score-item { text-align: center; }
+  .score-bar .score-item .score-name { font-size: 0.7rem; color: var(--text-dim); font-weight: 400; }
+  .score-bar .score-item .score-val { font-size: 1.3rem; }
+  .score-bar .score-item .score-val.you { color: var(--primary); }
+  .score-bar .score-item .score-val.opp { color: var(--accent); }
+
+  .comparison-table { flex: 1; overflow-y: auto; min-height: 0; }
+  .comp-row {
+    display: grid; grid-template-columns: 1fr 40px 1fr; gap: 4px; align-items: center;
+    padding: 3px 0; font-size: 0.75rem;
+  }
+  .comp-row.comp-header {
+    font-weight: 700; color: var(--text-dim); font-size: 0.65rem; text-transform: uppercase;
+    letter-spacing: 1px; padding-bottom: 6px; border-bottom: 1px solid var(--border); margin-bottom: 4px;
+    position: sticky; top: 0; background: var(--bg); z-index: 1;
+  }
+  .comp-cell {
+    display: flex; align-items: center; gap: 4px; padding: 4px 6px;
+    border-radius: 6px; min-width: 0;
+  }
+  .comp-cell .comp-rank {
+    width: 18px; height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 0.65rem; flex-shrink: 0;
+  }
+  .comp-cell .comp-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .comp-cell.correct { background: rgba(0,184,148,0.08); }
+  .comp-cell.dev-0 .comp-rank { background: var(--success); color: var(--bg); }
+  .comp-cell.dev-1 .comp-rank, .comp-cell.dev-2 .comp-rank { background: var(--accent); color: var(--bg); }
+  .comp-cell.dev-3 .comp-rank { background: #e74c3c; color: white; }
+  .comp-center { text-align: center; font-weight: 800; color: var(--text-dim2); font-size: 0.7rem; }
+
+  .mp-result-actions { display: flex; gap: 10px; padding: 8px 0; flex-shrink: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* ═══ FINAL RESULT ═══ */
+  #screen-mp-final.active { overflow-y: auto; justify-content: center; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
+  .final-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 24px; width: 100%; max-width: 400px; text-align: center;
+  }
+  .final-trophy { font-size: 4rem; margin-bottom: 8px; }
+  .final-winner { font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
+  .final-subtitle { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 16px; }
+  .final-table {
+    width: 100%; border-collapse: collapse; margin-bottom: 16px;
+    font-size: 0.8rem;
+  }
+  .final-table th { color: var(--text-dim); font-weight: 600; padding: 6px 8px; font-size: 0.7rem; text-transform: uppercase; }
+  .final-table td { padding: 6px 8px; border-top: 1px solid var(--border); }
+  .final-table .round-win { color: var(--success); font-weight: 700; }
+  .final-table .round-lose { color: var(--text-dim); }
+  .final-table .round-tie { color: var(--accent); }
+  .final-actions { display: flex; gap: 10px; margin-top: 12px; }
 </style>
 </head>
 <body>
 <div class="container">
 
-  <div id="screen-menu" class="screen active">
+  <!-- ═══ MODE SELECT ═══ -->
+  <div id="screen-mode" class="screen active">
+    <div class="header">
+      <h1>Top 10</h1>
+      <p>Wer kennt sich besser aus? Ranke Items nach echten Fakten!</p>
+    </div>
+    <div class="mode-buttons">
+      <button class="mode-btn" id="btn-solo">
+        <span class="mode-icon">🎯</span>
+        <div>
+          <div class="mode-label">Solo spielen</div>
+          <div class="mode-desc">Erstelle dein persönliches Ranking</div>
+        </div>
+      </button>
+      <button class="mode-btn" id="btn-multi">
+        <span class="mode-icon">⚔️</span>
+        <div>
+          <div class="mode-label">Multiplayer</div>
+          <div class="mode-desc">Best of 5 — Wer rankt näher am Ergebnis?</div>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ SOLO MENU ═══ -->
+  <div id="screen-menu" class="screen">
     <div class="header">
       <h1>Top 10</h1>
       <p>Wähle eine Kategorie. Dir werden 10 Einträge nacheinander gezeigt — platziere jeden auf deiner persönlichen Rangliste!</p>
@@ -240,6 +406,78 @@
     <div class="category-grid" id="category-grid"></div>
   </div>
 
+  <!-- ═══ LOBBY ═══ -->
+  <div id="screen-lobby" class="screen">
+    <div class="lobby-card" id="lobby-create-join">
+      <h2>⚔️ Multiplayer</h2>
+      <input class="lobby-input" id="lobby-name" type="text" placeholder="Dein Name" maxlength="15" autocomplete="off">
+      <button class="btn btn-primary" id="btn-create-room" style="width:100%">Spiel erstellen</button>
+      <div class="lobby-or">— oder —</div>
+      <input class="room-code-input" id="lobby-code" type="text" placeholder="CODE" maxlength="4" autocomplete="off">
+      <br><br>
+      <button class="btn btn-secondary" id="btn-join-room" style="width:100%">Spiel beitreten</button>
+      <div class="lobby-error" id="lobby-error"></div>
+    </div>
+    <div class="lobby-card" id="lobby-waiting" style="display:none">
+      <h2>Warte auf Gegner…</h2>
+      <div class="room-code-display" id="lobby-show-code"></div>
+      <p class="lobby-status">Teile diesen Code mit deinem Gegner</p>
+      <div class="lobby-players" id="lobby-players"></div>
+    </div>
+    <div class="lobby-card" id="lobby-countdown" style="display:none">
+      <div class="lobby-players" id="lobby-players-ready"></div>
+      <div style="font-size:3rem;font-weight:900;color:var(--accent);margin:16px 0" id="countdown-num">3</div>
+      <p class="lobby-status">Los geht's!</p>
+    </div>
+    <div style="text-align:center;margin-top:16px">
+      <button class="btn btn-secondary" id="btn-lobby-back" style="width:auto;padding:8px 24px">Zurück</button>
+    </div>
+  </div>
+
+  <!-- ═══ MP GAME ═══ -->
+  <div id="screen-mp-game" class="screen">
+    <div class="mp-header" id="mp-header"></div>
+    <div class="progress-bar">
+      <div class="progress-dots" id="mp-progress-dots"></div>
+      <span class="progress-label" id="mp-progress-label"></span>
+    </div>
+    <div class="current-item" id="mp-current-item-wrap">
+      <div class="item-img-wrap" id="mp-current-img-wrap"></div>
+      <div class="item-info">
+        <div class="label" id="mp-item-label">Wohin damit?</div>
+        <div class="name" id="mp-current-name"></div>
+        <div class="desc" id="mp-current-desc"></div>
+      </div>
+    </div>
+    <p class="slots-label">Wähle einen Platz</p>
+    <div class="slots" id="mp-slots" style="position:relative"></div>
+  </div>
+
+  <!-- ═══ ROUND RESULT ═══ -->
+  <div id="screen-mp-result" class="screen">
+    <div class="round-result-header" id="mp-result-header"></div>
+    <div class="score-bar" id="mp-score-bar"></div>
+    <div class="comparison-table" id="mp-comparison"></div>
+    <div class="mp-result-actions">
+      <button class="btn btn-primary" id="btn-next-round" style="flex:1">Nächste Runde</button>
+    </div>
+  </div>
+
+  <!-- ═══ FINAL RESULT ═══ -->
+  <div id="screen-mp-final" class="screen">
+    <div class="final-card">
+      <div class="final-trophy" id="final-trophy">🏆</div>
+      <div class="final-winner" id="final-winner"></div>
+      <div class="final-subtitle" id="final-subtitle"></div>
+      <table class="final-table" id="final-table"></table>
+      <div class="final-actions">
+        <button class="btn btn-secondary" id="btn-final-menu">Zurück zum Menü</button>
+        <button class="btn btn-primary" id="btn-final-rematch">Nochmal spielen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SOLO GAME (existing) ═══ -->
   <div id="screen-game" class="screen">
     <div class="progress-bar">
       <div class="progress-dots" id="progress-dots"></div>
@@ -275,6 +513,7 @@
   <p>Bilder werden geladen…</p>
 </div>
 
+<script src="/socket.io/socket.io.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════════════════════════════
 // DATA  —  [displayName, description, emoji, wikiTitle (EN) | "flag:XX"]
@@ -788,10 +1027,375 @@ function showResult() {
   showScreen('screen-result');
 }
 
-document.getElementById('btn-new-category').addEventListener('click', () => showScreen('screen-menu'));
+document.getElementById('btn-new-category').addEventListener('click', () => showScreen('screen-mode'));
 document.getElementById('btn-replay').addEventListener('click', () => startGame(state.categoryKey));
 
 renderCategories();
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MULTIPLAYER
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let socket = null;
+let mp = {
+  playerIndex: 0,
+  playerName: '',
+  opponentName: '',
+  roomCode: null,
+  token: null,
+  round: 0,
+  totalRounds: 5,
+  items: [],       // current round items [name, desc, emoji, wikiKey]
+  slots: [],
+  currentIndex: 0,
+  submitted: false,
+};
+
+function connectSocket() {
+  if (socket && socket.connected) return;
+  socket = io();
+
+  socket.on('room_created', ({ code, token, playerName }) => {
+    mp.roomCode = code;
+    mp.token = token;
+    mp.playerName = playerName;
+    localStorage.setItem('top10_token', token);
+    document.getElementById('lobby-create-join').style.display = 'none';
+    document.getElementById('lobby-waiting').style.display = 'block';
+    document.getElementById('lobby-show-code').textContent = code;
+    document.getElementById('lobby-players').innerHTML = `
+      <div class="lobby-player"><div class="lp-icon">🧑</div><div class="lp-name">${playerName}</div></div>
+      <div class="lobby-player waiting"><div class="lp-icon">❓</div><div class="lp-name">Warte…</div></div>
+    `;
+  });
+
+  socket.on('room_joined', ({ players, yourIndex, token }) => {
+    mp.playerIndex = yourIndex;
+    mp.playerName = players[yourIndex];
+    mp.opponentName = players[1 - yourIndex];
+    if (token) { mp.token = token; localStorage.setItem('top10_token', token); }
+    // Show countdown
+    document.getElementById('lobby-create-join').style.display = 'none';
+    document.getElementById('lobby-waiting').style.display = 'none';
+    document.getElementById('lobby-countdown').style.display = 'block';
+    document.getElementById('lobby-players-ready').innerHTML = `
+      <div class="lobby-player"><div class="lp-icon">🧑</div><div class="lp-name">${players[0]}</div></div>
+      <div class="lobby-player"><div class="lp-icon">🧑</div><div class="lp-name">${players[1]}</div></div>
+    `;
+    let count = 3;
+    document.getElementById('countdown-num').textContent = count;
+    const iv = setInterval(() => {
+      count--;
+      if (count <= 0) { clearInterval(iv); return; }
+      document.getElementById('countdown-num').textContent = count;
+    }, 1000);
+  });
+
+  socket.on('round_start', async (data) => {
+    mp.round = data.round;
+    mp.totalRounds = data.totalRounds;
+    mp.items = data.items;
+    mp.slots = new Array(10).fill(null);
+    mp.currentIndex = 0;
+    mp.submitted = false;
+
+    // Prefetch images
+    document.getElementById('loading').classList.remove('hidden');
+    await prefetchImages(mp.items);
+    document.getElementById('loading').classList.add('hidden');
+
+    // Setup header
+    document.getElementById('mp-header').innerHTML = `
+      Runde ${data.round + 1}/${data.totalRounds} — ${data.categoryEmoji} ${data.categoryName}
+      <div class="mp-criterion">${data.criterionDesc}</div>
+    `;
+    showScreen('screen-mp-game');
+    renderMpGame();
+  });
+
+  socket.on('opponent_done', () => {
+    // Show small indicator (opponent finished)
+    const label = document.getElementById('mp-progress-label');
+    if (label) label.textContent = `${mp.currentIndex + 1} von 10 · Gegner fertig!`;
+  });
+
+  socket.on('round_result', (data) => {
+    renderRoundResult(data);
+  });
+
+  socket.on('opponent_disconnected', () => {
+    document.getElementById('lobby-error').textContent = 'Gegner getrennt — warte auf Reconnect…';
+  });
+
+  socket.on('opponent_reconnected', () => {
+    document.getElementById('lobby-error').textContent = '';
+  });
+
+  socket.on('opponent_forfeit', () => {
+    alert('Gegner hat das Spiel verlassen. Du gewinnst!');
+    showScreen('screen-mode');
+  });
+
+  socket.on('opponent_wants_rematch', () => {
+    document.getElementById('btn-final-rematch').textContent = 'Rematch starten!';
+  });
+
+  socket.on('error_msg', ({ message }) => {
+    document.getElementById('lobby-error').textContent = message;
+  });
+
+  socket.on('reconnect_state', async (data) => {
+    mp.playerIndex = data.yourIndex;
+    mp.playerName = data.players[data.yourIndex];
+    mp.opponentName = data.players[1 - data.yourIndex];
+    if (data.phase === 'playing' && !data.alreadySubmitted) {
+      // Resume game
+      mp.items = data.items;
+      mp.slots = new Array(10).fill(null);
+      mp.currentIndex = 0;
+      mp.submitted = false;
+      mp.round = data.round;
+      mp.totalRounds = data.totalRounds;
+      await prefetchImages(mp.items);
+      document.getElementById('mp-header').innerHTML = `
+        Runde ${data.round + 1}/${data.totalRounds} — ${data.categoryEmoji} ${data.categoryName}
+        <div class="mp-criterion">${data.criterionDesc}</div>
+      `;
+      showScreen('screen-mp-game');
+      renderMpGame();
+    }
+  });
+}
+
+// ── MP Game Rendering ──────────────────────────────────────────────────
+
+function renderMpGame() {
+  // Progress dots
+  const dotsEl = document.getElementById('mp-progress-dots');
+  dotsEl.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'progress-dot' + (i < mp.currentIndex ? ' done' : '') + (i === mp.currentIndex ? ' current' : '');
+    dotsEl.appendChild(dot);
+  }
+  document.getElementById('mp-progress-label').textContent = `${mp.currentIndex + 1} von 10`;
+
+  // Current item
+  const cur = mp.items[mp.currentIndex];
+  document.getElementById('mp-current-img-wrap').innerHTML = imgHTML(cur[3], cur[2], 'emoji-fallback');
+  document.getElementById('mp-current-name').textContent = cur[0];
+  document.getElementById('mp-current-desc').textContent = cur[1];
+
+  // Slots
+  const slotsEl = document.getElementById('mp-slots');
+  slotsEl.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'slot';
+    const item = mp.slots[i];
+    if (item !== null) {
+      const it = mp.items[item];
+      slot.classList.add('taken');
+      slot.innerHTML = `
+        <div class="rank">${i + 1}</div>
+        <div class="slot-thumb">${imgHTML(it[3], it[2], 'emoji-sm')}</div>
+        <div class="slot-content"><div class="slot-name">${it[0]}</div></div>`;
+    } else {
+      slot.innerHTML = `<div class="rank">${i + 1}</div><div class="slot-thumb"></div><div class="slot-content"><div class="slot-name">—</div></div>`;
+      slot.addEventListener('click', () => mpPlaceItem(i));
+    }
+    slotsEl.appendChild(slot);
+  }
+}
+
+function mpPlaceItem(slotIndex) {
+  if (mp.currentIndex >= 10 || mp.submitted) return;
+  mp.slots[slotIndex] = mp.currentIndex;
+  mp.currentIndex++;
+
+  if (mp.currentIndex >= 10) {
+    // All placed — submit to server
+    mp.submitted = true;
+    socket.emit('submit_ranking', { ranking: mp.slots });
+
+    // Update last slot visually
+    renderMpGame();
+
+    // Show waiting overlay
+    const slotsEl = document.getElementById('mp-slots');
+    const overlay = document.createElement('div');
+    overlay.className = 'waiting-overlay';
+    overlay.innerHTML = '<div class="spinner"></div><p>Warte auf Gegner…</p>';
+    slotsEl.appendChild(overlay);
+    return;
+  }
+  renderMpGame();
+  const s = document.getElementById('mp-slots').children[slotIndex];
+  if (s) s.classList.add('just-placed');
+}
+
+// ── Round Result Rendering ─────────────────────────────────────────────
+
+function renderRoundResult(data) {
+  const isYouP0 = data.yourIndex === 0;
+  const youDev = isYouP0 ? data.p0Deviation : data.p1Deviation;
+  const oppDev = isYouP0 ? data.p1Deviation : data.p0Deviation;
+  const youRanking = isYouP0 ? data.p0Ranking : data.p1Ranking;
+  const oppRanking = isYouP0 ? data.p1Ranking : data.p0Ranking;
+  const youItemDevs = isYouP0 ? data.p0ItemDevs : data.p1ItemDevs;
+  const oppItemDevs = isYouP0 ? data.p1ItemDevs : data.p0ItemDevs;
+  const youName = data.playerNames[data.yourIndex];
+  const oppName = data.playerNames[1 - data.yourIndex];
+  const youScores = data.scores[data.yourIndex];
+  const oppScores = data.scores[1 - data.yourIndex];
+
+  let winText, winClass;
+  if (data.roundWinner === -1) { winText = 'Unentschieden!'; winClass = 'tie'; }
+  else if (data.roundWinner === data.yourIndex) { winText = 'Du gewinnst die Runde!'; winClass = 'win'; }
+  else { winText = `${oppName} gewinnt die Runde!`; winClass = 'lose'; }
+
+  document.getElementById('mp-result-header').innerHTML = `
+    <h2>Runde ${data.round + 1}/${data.totalRounds}</h2>
+    <div class="round-winner ${winClass}">${winText}</div>
+  `;
+
+  document.getElementById('mp-score-bar').innerHTML = `
+    <div class="score-item"><div class="score-name">${youName}</div><div class="score-val you">${youScores.roundsWon}</div><div class="score-name">Abw: ${youDev}</div></div>
+    <div class="score-item"><div class="score-name">Runden</div><div class="score-val">${data.round + 1}/${data.totalRounds}</div></div>
+    <div class="score-item"><div class="score-name">${oppName}</div><div class="score-val opp">${oppScores.roundsWon}</div><div class="score-name">Abw: ${oppDev}</div></div>
+  `;
+
+  // Comparison table
+  let html = `<div class="comp-row comp-header">
+    <div style="text-align:center">${youName}</div>
+    <div style="text-align:center">#</div>
+    <div style="text-align:center">${oppName}</div>
+  </div>`;
+
+  for (let i = 0; i < 10; i++) {
+    const correctItem = data.correct[i];
+    const youItem = youRanking[i];
+    const oppItem = oppRanking[i];
+    const yd = youItemDevs[i];
+    const od = oppItemDevs[i];
+    const yDevClass = `dev-${Math.min(yd, 3)}`;
+    const oDevClass = `dev-${Math.min(od, 3)}`;
+
+    html += `<div class="comp-row">
+      <div class="comp-cell ${yDevClass}">
+        <div class="comp-rank">${yd === 0 ? '✓' : '+' + yd}</div>
+        <span class="comp-name">${youItem[0]}</span>
+      </div>
+      <div class="comp-center">${i + 1}</div>
+      <div class="comp-cell ${oDevClass}">
+        <div class="comp-rank">${od === 0 ? '✓' : '+' + od}</div>
+        <span class="comp-name">${oppItem[0]}</span>
+      </div>
+    </div>`;
+  }
+  document.getElementById('mp-comparison').innerHTML = html;
+
+  // Button
+  const btn = document.getElementById('btn-next-round');
+  if (data.isFinal) {
+    btn.style.display = 'none';
+    // Show final after short delay
+    setTimeout(() => renderFinalResult(data), 2000);
+  } else {
+    btn.style.display = '';
+    btn.textContent = 'Nächste Runde';
+  }
+
+  showScreen('screen-mp-result');
+}
+
+function renderFinalResult(data) {
+  const youIdx = data.yourIndex;
+  const oppIdx = 1 - youIdx;
+  const youName = data.playerNames[youIdx];
+  const oppName = data.playerNames[oppIdx];
+  const youWon = data.scores[youIdx].roundsWon;
+  const oppWon = data.scores[oppIdx].roundsWon;
+
+  let trophy, winnerText, subtitle;
+  if (data.overallWinner === youIdx) {
+    trophy = '🏆'; winnerText = `${youName} gewinnt!`; subtitle = `${youWon} : ${oppWon} Runden`;
+  } else if (data.overallWinner === oppIdx) {
+    trophy = '😢'; winnerText = `${oppName} gewinnt!`; subtitle = `${oppWon} : ${youWon} Runden`;
+  } else {
+    trophy = '🤝'; winnerText = 'Unentschieden!'; subtitle = `${youWon} : ${oppWon} Runden`;
+  }
+
+  document.getElementById('final-trophy').textContent = trophy;
+  document.getElementById('final-winner').textContent = winnerText;
+  document.getElementById('final-subtitle').textContent = subtitle;
+
+  // Round table
+  let tableHtml = `<thead><tr><th>Runde</th><th>${youName}</th><th>${oppName}</th></tr></thead><tbody>`;
+  for (let r = 0; r < data.totalRounds; r++) {
+    const yd = data.scores[youIdx].deviations[r];
+    const od = data.scores[oppIdx].deviations[r];
+    const yClass = yd < od ? 'round-win' : yd > od ? 'round-lose' : 'round-tie';
+    const oClass = od < yd ? 'round-win' : od > yd ? 'round-lose' : 'round-tie';
+    tableHtml += `<tr><td>Runde ${r + 1}</td><td class="${yClass}">${yd}</td><td class="${oClass}">${od}</td></tr>`;
+  }
+  tableHtml += '</tbody>';
+  document.getElementById('final-table').innerHTML = tableHtml;
+  document.getElementById('btn-final-rematch').textContent = 'Nochmal spielen';
+
+  showScreen('screen-mp-final');
+}
+
+// ── Event Listeners ────────────────────────────────────────────────────
+
+document.getElementById('btn-solo').addEventListener('click', () => showScreen('screen-menu'));
+document.getElementById('btn-multi').addEventListener('click', () => {
+  connectSocket();
+  // Reset lobby UI
+  document.getElementById('lobby-create-join').style.display = 'block';
+  document.getElementById('lobby-waiting').style.display = 'none';
+  document.getElementById('lobby-countdown').style.display = 'none';
+  document.getElementById('lobby-error').textContent = '';
+  showScreen('screen-lobby');
+});
+
+document.getElementById('btn-create-room').addEventListener('click', () => {
+  const name = document.getElementById('lobby-name').value.trim() || 'Spieler 1';
+  socket.emit('create_room', { playerName: name });
+});
+
+document.getElementById('btn-join-room').addEventListener('click', () => {
+  const name = document.getElementById('lobby-name').value.trim() || 'Spieler 2';
+  const code = document.getElementById('lobby-code').value.trim().toUpperCase();
+  if (code.length !== 4) {
+    document.getElementById('lobby-error').textContent = 'Code muss 4 Zeichen haben';
+    return;
+  }
+  socket.emit('join_room', { code, playerName: name });
+});
+
+document.getElementById('btn-next-round').addEventListener('click', () => {
+  socket.emit('ready_next');
+  document.getElementById('btn-next-round').textContent = 'Warte auf Gegner…';
+  document.getElementById('btn-next-round').disabled = true;
+  setTimeout(() => { document.getElementById('btn-next-round').disabled = false; }, 5000);
+});
+
+document.getElementById('btn-final-menu').addEventListener('click', () => showScreen('screen-mode'));
+document.getElementById('btn-final-rematch').addEventListener('click', () => {
+  socket.emit('play_again');
+  document.getElementById('btn-final-rematch').textContent = 'Warte auf Gegner…';
+});
+document.getElementById('btn-lobby-back').addEventListener('click', () => showScreen('screen-mode'));
+
+// Auto-reconnect on page load
+(function() {
+  const token = localStorage.getItem('top10_token');
+  if (token) {
+    connectSocket();
+    socket.emit('reconnect_attempt', { token });
+  }
+})();
 
 // Generate apple-touch-icon as PNG from canvas (iOS needs PNG)
 (function() {
